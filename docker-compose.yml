@@ -1,0 +1,50 @@
+version: '25.0.3'
+
+services:
+
+  redis:
+    image: redis
+    container_name: redis_contaner
+
+  django:
+    container_name: dcelery
+    build: 
+      context: ./dcelery
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./dcelery:/user/src/app/
+    ports:
+      - 8001:8000
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=euerht87fg2tfo4h45g
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    depends_on:
+      - redis
+
+  celery:
+    container_name: celery
+    build: 
+      context: ./dcelery
+    command: celery --app=dcelery worker -l INFO
+    volumes:
+      - ./dcelery:/user/src/app/
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=euerht87fg2tfo4h45g
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    depends_on:
+      - redis
+      - django
+
+  celery2:
+    container_name: celery2
+    build: 
+      context: ./CeleryWorker
+      dockerfile: dockerfile
+    command: celery -A mycelery worker --loglevel=INFO
+    volumes:
+      - ./CeleryWorker:/user/src/app/
+    depends_on:
+      - redis
+      - django
